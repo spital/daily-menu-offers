@@ -1,5 +1,9 @@
 # daily-menu-offers
 
+Write an app to find out what's cooking today.
+
+Every pub presents information about its daily or weekly menu somewhere on the web. Your job is to find out and present information about what each of the restaurants below is cooking today. I like toppings, so I'm interested in those too. Just the whole daily menu... It's good to know what's cooking when you don't know what you're craving.
+
 ## CO SE DNES VARI?
 
 Napis aplikaci, ktera zjisti co se prave dnes vari.
@@ -18,11 +22,6 @@ http://www.suzies.cz/poledni-menu.html
 
 VERONI CAFE
 https://www.menicka.cz/4921-veroni-coffee--chocolate.html
-
-
-Write an app to find out what's cooking today.
-
-Every pub presents information about its daily or weekly menu somewhere on the web. Your job is to find out and present information about what each of the restaurants below is cooking today. I like toppings, so I'm interested in those too. Just the whole daily menu... It's good to know what's cooking when you don't know what you're craving.
 
 
 ## Install Golang
