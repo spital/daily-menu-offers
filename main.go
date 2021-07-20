@@ -13,19 +13,34 @@ func scrape_suzies() {
 		colly.MaxDepth(1),
 	)
 	var result []string
-	c.SetRequestTimeout(55 * 1e9)
+	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML("div.food-menu", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2. 1.")
 		e.DOM.Find("div.uk-card-body").Each(func(_ int, day_menu *goquery.Selection) {
 			dow_date := strings.Split(day_menu.Find("h2").Text(), " ")
-			dow := dow_date[0]
-			date := dow_date[1] + " " + dow_date[2]
-			if date == today {
-				day_menu.Find("div.uk-grid-small").Each(func(_ int, s *goquery.Selection) { result = append(result, s.Text()) })
-				fmt.Println("SUZIES daily menu @", dow, date)
-				print_string_list(result)
+			if dow_date[1]+" "+dow_date[2] == today {
+				day_menu.Find("h3").Each(func(_ int, s *goquery.Selection) {
+					result = append(result, trimEveryLine(s.Text()))
+				})
+				day_menu.Find("div.uk-width-expand").Each(func(_ int, s *goquery.Selection) {
+					result = append(result, trimEveryLine(s.Text()))
+				})
+				day_menu.Find("div.price").Each(func(_ int, s *goquery.Selection) {
+					result = append(result, trimEveryLine(s.Text()))
+				})
+				fmt.Println("SUZIES daily menu @", dow_date[0], today)
+
 			}
 		})
+		var res1 []string
+		len3 := len(result)/3 + 1
+		res1 = append(res1, result[0]+"::"+result[len3]) //soup
+		fmt.Println(result, len3, len(result))
+		for i := 2; i < len3; i++ {
+			res1 = append(res1, result[i]+"::"+result[i+len3]+"::"+result[i+len3*2-1])
+		}
+		result = res1
+		print_string_list(result)
 	})
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("===============================")
@@ -65,7 +80,7 @@ func scrape_veroni() {
 		colly.MaxDepth(1),
 	)
 	var result []string
-	c.SetRequestTimeout(55 * 1e9)
+	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML(".obsah", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2.1.2006")
 		e.ForEach("div.menicka", func(_ int, e1 *colly.HTMLElement) {
@@ -91,6 +106,14 @@ func print_string_list(lst []string) {
 	for i, s := range lst {
 		fmt.Printf("'(%d)%s'\n", i, s)
 	}
+}
+
+func trimEveryLine(multiline string) string {
+	var b strings.Builder
+	for _, l := range strings.Split(multiline, "\n") {
+		fmt.Fprintf(&b, " %v ", strings.TrimSpace(l))
+	}
+	return strings.TrimSpace(b.String())
 }
 
 func main() {

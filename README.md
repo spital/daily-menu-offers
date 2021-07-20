@@ -18,7 +18,7 @@ PIVNICE U CAPA
 https://www.pivnice-ucapa.cz/denni-menu.php
 
 SUZIES STEAK PUB
-http://www.suzies.cz/poledni-menu.html
+http://www.suzies.cz/poledni-menu
 
 VERONI CAFE
 https://www.menicka.cz/4921-veroni-coffee--chocolate.html
@@ -32,8 +32,20 @@ sudo dnf -y install golang
 ```
 Or check https://golang.org/doc/install
 
-## Run app
+## Test
+
+*Note* test only mutex/waitgroup/channel of string; web parsing test is not included as I did not want to upload pieces of websites
+
+```bash
+go test
+```
+
+## Build and run app
 
 ```bash
 go run ./main.go
+
+# or
+
+go build && ./daily-menu-offers
 ```
