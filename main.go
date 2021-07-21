@@ -35,7 +35,6 @@ func scrape_suzies() {
 		var res1 []string
 		len3 := len(result)/3 + 1
 		res1 = append(res1, result[0]+"::"+result[len3]) //soup
-		fmt.Println(result, len3, len(result))
 		for i := 2; i < len3; i++ {
 			res1 = append(res1, result[i]+"::"+result[i+len3]+"::"+result[i+len3*2-1])
 		}
@@ -57,16 +56,17 @@ func scrape_u_capa() {
 	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML("div.listek", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2. 1. 2006")
-		e.ForEach("div.row", func(_ int, e1 *colly.HTMLElement) {
-			dow := e1.ChildText("div.day")
-			date := e1.ChildText("div.date")
-			if date == today {
-				e1.DOM.Find("div.row").Each(func(_ int, s *goquery.Selection) { result = append(result, s.Text()) })
-				fmt.Println("U CAPA daily menu @", dow, date)
-				print_string_list(result)
-			}
+		e.DOM.Find("div.row").Each(func(_ int, daily_menu *goquery.Selection) {
+		    date := daily_menu.Find("div.date").Text()
+		    dow := daily_menu.Find("div.day").Text()
+		    if date == today {
+		    fmt.Println("U CAPA daily menu @", dow, date)
+		    daily_menu.Find("div.row").Each(func(_ int, s *goquery.Selection) { result = append(result, trimEveryLine(s.Text())) })
+		    }
+		    })
+		print_string_list(result)
+
 		})
-	})
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("===============================")
