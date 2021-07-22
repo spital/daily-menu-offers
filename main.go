@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -28,7 +29,7 @@ func scrape_suzies() {
 				day_menu.Find("div.price").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, trimEveryLine(s.Text()))
 				})
-				fmt.Println("SUZIES daily menu @", dow_date[0], today)
+				//fmt.Println("SUZIES daily menu @", dow_date[0], today)
 
 			}
 		})
@@ -36,15 +37,18 @@ func scrape_suzies() {
 		len3 := len(result)/3 + 1
 		res1 = append(res1, result[0]+"::"+result[len3]) //soup
 		for i := 2; i < len3; i++ {
-			res1 = append(res1, result[i]+"::"+result[i+len3]+"::"+result[i+len3*2-1])
+			res1 = append(res1, result[i]+"::"+result[i+len3]+" "+result[i+len3*2-1])
 		}
-		result = res1
+		str1 := fmt.Sprintln("SUZIES daily menu @", dow_date[0], today)  // TODO declare before
+		var res2 []string
+		res2 := append(res2,str1)
+		result = append(res2,res1)  // TODO fix append []string ; ?? *list like in python ??
 		print_string_list(result)
 	})
-	c.OnRequest(func(r *colly.Request) {
+	/* c.OnRequest(func(r *colly.Request) {
 		fmt.Println("===============================")
 		fmt.Println("Daily menu from: ", r.URL.String())
-	})
+	}) */
 	c.Visit("http://www.suzies.cz/poledni-menu")
 }
 
@@ -57,16 +61,16 @@ func scrape_u_capa() {
 	c.OnHTML("div.listek", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2. 1. 2006")
 		e.DOM.Find("div.row").Each(func(_ int, daily_menu *goquery.Selection) {
-		    date := daily_menu.Find("div.date").Text()
-		    dow := daily_menu.Find("div.day").Text()
-		    if date == today {
-		    fmt.Println("U CAPA daily menu @", dow, date)
-		    daily_menu.Find("div.row").Each(func(_ int, s *goquery.Selection) { result = append(result, trimEveryLine(s.Text())) })
-		    }
-		    })
+			date := daily_menu.Find("div.date").Text()
+			dow := daily_menu.Find("div.day").Text()
+			if date == today {
+				fmt.Println("U CAPA daily menu @", dow, date)
+				daily_menu.Find("div.row").Each(func(_ int, s *goquery.Selection) { result = append(result, trimEveryLine(s.Text())) })
+			}
+		})
 		print_string_list(result)
 
-		})
+	})
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("===============================")
@@ -113,7 +117,9 @@ func trimEveryLine(multiline string) string {
 	for _, l := range strings.Split(multiline, "\n") {
 		fmt.Fprintf(&b, " %v ", strings.TrimSpace(l))
 	}
-	return strings.TrimSpace(b.String())
+	space := regexp.MustCompile(`\s+`)
+	ret := space.ReplaceAllString(b.String(), " ")
+	return strings.TrimSpace(ret)
 }
 
 func main() {
