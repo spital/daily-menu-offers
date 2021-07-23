@@ -6,10 +6,11 @@ import (
 	"github.com/gocolly/colly/v2"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
-func scrape_suzies() {
+func scrape_suzies(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
 	)
@@ -36,19 +37,23 @@ func scrape_suzies() {
 		len3 := len(result)/3 + 1
 		res1 = append(res1, result[0]+"::"+result[len3]) //soup
 		for i := 2; i < len3; i++ {
-			res1 = append(res1, result[i]+"::"+result[i+len3]+" "+result[i+len3*2-1])
+			res1 = append(res1, result[i]+"::"+result[i+len3]+" "+result[i+len3*2-1]) // third -1 `cos soup has no price
 		}
-		//str1 := fmt.Sprintf("SUZIES daily menu @ %s %s", dow_date[0], today)
 		var res2 []string
-		res2 = append(res2, fmt.Sprintf("==============================="))
+		res2 = append(res2, fmt.Sprintf("======================================="))
 		res2 = append(res2, fmt.Sprintf("SUZIES daily menu @ %s %s", dow_date[0], today))
 		result = append(res2, res1...)
-		print_string_list(result)
+		mutex.Lock()
+		for _, v := range result {
+			strchan <- v
+		}
+		mutex.Unlock()
+		wg.Done()
 	})
 	c.Visit("http://www.suzies.cz/poledni-menu")
 }
 
-func scrape_u_capa() {
+func scrape_u_capa(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
 	)
@@ -61,21 +66,25 @@ func scrape_u_capa() {
 			date = daily_menu.Find("div.date").Text()
 			dow = daily_menu.Find("div.day").Text()
 			if date == today {
-			dow_date = dow + " " + date
+				dow_date = dow + " " + date
 				daily_menu.Find("div.row").Each(func(_ int, s *goquery.Selection) { result = append(result, trimEveryLine(s.Text())) })
 			}
 		})
 		var res2 []string
-		fmt.Println("dow date 2",dow,date)
-		res2 = append(res2, fmt.Sprintf("==============================="))
+		res2 = append(res2, fmt.Sprintf("======================================="))
 		res2 = append(res2, fmt.Sprintf("U CAPA daily menu @ %s", dow_date))
 		result = append(res2, result...)
-		print_string_list(result)
+		mutex.Lock()
+		for _, v := range result {
+			strchan <- v
+		}
+		mutex.Unlock()
+		wg.Done()
 	})
 	c.Visit("https://www.pivnice-ucapa.cz/denni-menu.php")
 }
 
-func scrape_veroni() {
+func scrape_veroni(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
 	)
@@ -94,18 +103,17 @@ func scrape_veroni() {
 			}
 		})
 		var res2 []string
-		res2 = append(res2, fmt.Sprintf("==============================="))
+		res2 = append(res2, fmt.Sprintf("======================================="))
 		res2 = append(res2, fmt.Sprintf("VERONI daily menu @ %s %s", dow_date[0], dow_date[1]))
 		result = append(res2, result...)
-		print_string_list(result)
+		mutex.Lock()
+		for _, v := range result {
+			strchan <- v
+		}
+		mutex.Unlock()
+		wg.Done()
 	})
 	c.Visit("https://www.menicka.cz/4921-veroni-coffee--chocolate.html")
-}
-
-func print_string_list(lst []string) {
-	for i, s := range lst {
-		fmt.Printf("'(%d)%s'\n", i, s)
-	}
 }
 
 func trimEveryLine(multiline string) string {
@@ -119,7 +127,22 @@ func trimEveryLine(multiline string) string {
 }
 
 func main() {
-	//scrape_suzies()
-	scrape_u_capa()
-	//scrape_veroni()
+	var (
+		mutex sync.Mutex
+		wg    sync.WaitGroup
+	)
+	strchan := make(chan string, 40)
+
+	wg.Add(3)
+	go scrape_suzies(&wg, strchan, &mutex)
+	go scrape_u_capa(&wg, strchan, &mutex)
+	go scrape_veroni(&wg, strchan, &mutex)
+	wg.Wait()
+
+	close(strchan)
+
+	for s := range strchan {
+		fmt.Println(s)
+	}
+
 }
