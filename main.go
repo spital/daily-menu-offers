@@ -14,11 +14,12 @@ func scrape_suzies() {
 		colly.MaxDepth(1),
 	)
 	var result []string
+	var dow_date []string
 	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML("div.food-menu", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2. 1.")
 		e.DOM.Find("div.uk-card-body").Each(func(_ int, day_menu *goquery.Selection) {
-			dow_date := strings.Split(day_menu.Find("h2").Text(), " ")
+			dow_date = strings.Split(day_menu.Find("h2").Text(), " ")
 			if dow_date[1]+" "+dow_date[2] == today {
 				day_menu.Find("h3").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, trimEveryLine(s.Text()))
@@ -29,8 +30,6 @@ func scrape_suzies() {
 				day_menu.Find("div.price").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, trimEveryLine(s.Text()))
 				})
-				//fmt.Println("SUZIES daily menu @", dow_date[0], today)
-
 			}
 		})
 		var res1 []string
@@ -39,16 +38,13 @@ func scrape_suzies() {
 		for i := 2; i < len3; i++ {
 			res1 = append(res1, result[i]+"::"+result[i+len3]+" "+result[i+len3*2-1])
 		}
-		str1 := fmt.Sprintln("SUZIES daily menu @", dow_date[0], today)  // TODO declare before
+		//str1 := fmt.Sprintf("SUZIES daily menu @ %s %s", dow_date[0], today)
 		var res2 []string
-		res2 := append(res2,str1)
-		result = append(res2,res1)  // TODO fix append []string ; ?? *list like in python ??
+		res2 = append(res2, fmt.Sprintf("==============================="))
+		res2 = append(res2, fmt.Sprintf("SUZIES daily menu @ %s %s", dow_date[0], today))
+		result = append(res2, res1...)
 		print_string_list(result)
 	})
-	/* c.OnRequest(func(r *colly.Request) {
-		fmt.Println("===============================")
-		fmt.Println("Daily menu from: ", r.URL.String())
-	}) */
 	c.Visit("http://www.suzies.cz/poledni-menu")
 }
 
@@ -57,24 +53,24 @@ func scrape_u_capa() {
 		colly.MaxDepth(1),
 	)
 	var result []string
+	var dow, date, dow_date string
 	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML("div.listek", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2. 1. 2006")
 		e.DOM.Find("div.row").Each(func(_ int, daily_menu *goquery.Selection) {
-			date := daily_menu.Find("div.date").Text()
-			dow := daily_menu.Find("div.day").Text()
+			date = daily_menu.Find("div.date").Text()
+			dow = daily_menu.Find("div.day").Text()
 			if date == today {
-				fmt.Println("U CAPA daily menu @", dow, date)
+			dow_date = dow + " " + date
 				daily_menu.Find("div.row").Each(func(_ int, s *goquery.Selection) { result = append(result, trimEveryLine(s.Text())) })
 			}
 		})
+		var res2 []string
+		fmt.Println("dow date 2",dow,date)
+		res2 = append(res2, fmt.Sprintf("==============================="))
+		res2 = append(res2, fmt.Sprintf("U CAPA daily menu @ %s", dow_date))
+		result = append(res2, result...)
 		print_string_list(result)
-
-	})
-
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("===============================")
-		fmt.Println("Daily menu from: ", r.URL.String())
 	})
 	c.Visit("https://www.pivnice-ucapa.cz/denni-menu.php")
 }
@@ -84,24 +80,24 @@ func scrape_veroni() {
 		colly.MaxDepth(1),
 	)
 	var result []string
+	var dow_date []string
 	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML(".obsah", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2.1.2006")
 		e.ForEach("div.menicka", func(_ int, e1 *colly.HTMLElement) {
-			dow_date := strings.Split(e1.ChildText("div.nadpis"), " ")
+			dow_date = strings.Split(e1.ChildText("div.nadpis"), " ")
 			if dow_date[1] == today {
 				ul := e1.DOM.Find("ul").First()
 				ul.Find("li").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, s.Find("div.polozka").First().Text()+" "+s.Find("div.cena").First().Text())
 				})
-				fmt.Println("VERONI daily menu @", today)
-				print_string_list(result)
 			}
 		})
-	})
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("===============================")
-		fmt.Println("Daily menu from: ", r.URL.String())
+		var res2 []string
+		res2 = append(res2, fmt.Sprintf("==============================="))
+		res2 = append(res2, fmt.Sprintf("VERONI daily menu @ %s %s", dow_date[0], dow_date[1]))
+		result = append(res2, result...)
+		print_string_list(result)
 	})
 	c.Visit("https://www.menicka.cz/4921-veroni-coffee--chocolate.html")
 }
@@ -123,7 +119,7 @@ func trimEveryLine(multiline string) string {
 }
 
 func main() {
-	scrape_suzies()
+	//scrape_suzies()
 	scrape_u_capa()
-	scrape_veroni()
+	//scrape_veroni()
 }
