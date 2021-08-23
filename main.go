@@ -20,8 +20,9 @@ func scrape_suzies(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	c.OnHTML("div.food-menu", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2.1.2006")
 		e.DOM.Find("div.uk-card-body").Each(func(_ int, day_menu *goquery.Selection) {
-			dow_date = strings.Split(day_menu.Find("h2").Text(), " ")
-			if dow_date[1] == today {
+			dow_date_act := strings.Split(day_menu.Find("h2").Text(), " ")
+			if dow_date_act[1] == today {
+				dow_date = dow_date_act
 				day_menu.Find("h3").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, trimEveryLine(s.Text()))
 				})
@@ -94,8 +95,9 @@ func scrape_veroni(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	c.OnHTML(".obsah", func(e *colly.HTMLElement) {
 		today := time.Now().Format("2.1.2006")
 		e.ForEach("div.menicka", func(_ int, e1 *colly.HTMLElement) {
-			dow_date = strings.Split(e1.ChildText("div.nadpis"), " ")
-			if dow_date[1] == today {
+			dow_date_act := strings.Split(e1.ChildText("div.nadpis"), " ")
+			if dow_date_act[1] == today {
+				dow_date = dow_date_act
 				ul := e1.DOM.Find("ul").First()
 				ul.Find("li").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, s.Find("div.polozka").First().Text()+" "+s.Find("div.cena").First().Text())
