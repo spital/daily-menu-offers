@@ -18,10 +18,10 @@ func scrape_suzies(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	var dow_date []string
 	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML("div.food-menu", func(e *colly.HTMLElement) {
-		today := time.Now().Format("2. 1.")
+		today := time.Now().Format("2.1.2006")
 		e.DOM.Find("div.uk-card-body").Each(func(_ int, day_menu *goquery.Selection) {
 			dow_date = strings.Split(day_menu.Find("h2").Text(), " ")
-			if dow_date[1]+" "+dow_date[2] == today {
+			if dow_date[1] == today {
 				day_menu.Find("h3").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, trimEveryLine(s.Text()))
 				})
