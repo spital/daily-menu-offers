@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const MAX_MENU_LINES = 100
+
 func scrape_suzies(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
@@ -18,10 +20,14 @@ func scrape_suzies(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 	var dow_date []string
 	c.SetRequestTimeout(55 * time.Second)
 	c.OnHTML("div.food-menu", func(e *colly.HTMLElement) {
-		today := time.Now().Format("2.1.2006")
+		time_now := time.Now()
+		weekday := int(time_now.Weekday()) // 0 = Sunday
+		today := time_now.Format("2.1.2006")
+		day_count := 0
 		e.DOM.Find("div.uk-card-body").Each(func(_ int, day_menu *goquery.Selection) {
 			dow_date_act := strings.Split(day_menu.Find("h2").Text(), " ")
-			if dow_date_act[1] == today {
+			day_count++
+			if day_count == weekday {
 				dow_date = dow_date_act
 				day_menu.Find("h3").Each(func(_ int, s *goquery.Selection) {
 					result = append(result, trimEveryLine(s.Text()))
@@ -37,12 +43,14 @@ func scrape_suzies(wg *sync.WaitGroup, strchan chan string, mutex *sync.Mutex) {
 		var res1 []string
 		len3 := len(result)/3 + 1
 		res1 = append(res1, result[0]+"::"+result[len3]) //soup
-		for i := 2; i < len3; i++ {
+		// fmt.Printf("=== res1 %v len3 %d \n", res1, len3)
+		// for i,v := range result{fmt.Printf("%d*%s\n",i,v)}
+		for i := 1; i < len3; i++ {
 			res1 = append(res1, result[i]+"::"+result[i+len3]+" "+result[i+len3*2-1]) // third -1 `cos soup has no price
 		}
 		var res2 []string
 		res2 = append(res2, fmt.Sprintf("======================================="))
-		res2 = append(res2, fmt.Sprintf("SUZIES daily menu @ %s %s", dow_date[0], today))
+		res2 = append(res2, fmt.Sprintf("SUZIES daily menu @ %s", today))
 		result = append(res2, res1...)
 		mutex.Lock()
 		for _, v := range result {
@@ -133,7 +141,7 @@ func main() {
 		mutex sync.Mutex
 		wg    sync.WaitGroup
 	)
-	strchan := make(chan string, 40)
+	strchan := make(chan string, MAX_MENU_LINES)
 
 	wg.Add(3)
 	go scrape_suzies(&wg, strchan, &mutex)
